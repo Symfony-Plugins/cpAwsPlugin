@@ -1,0 +1,65 @@
+S3Object:
+  connection: doctrine
+  tableName: s3object
+  columns:
+    id:
+      type: integer(11)
+      fixed: false
+      unsigned: false
+      primary: true
+      autoincrement: true
+    type:
+      type: integer(1)
+      fixed: false
+      unsigned: true
+      primary: false
+      notnull: true
+    title:
+      type: string(100)
+      fixed: truee
+      notnull: false   
+    description:
+      type: string
+      fixed: false
+      notnull: false
+    filename:
+      type: string(200)
+      fixed: true
+      notnull: true
+    original_filename:
+      type: string(100)
+      fixed: true
+      notnull: true
+    size:
+      type: integer(11)
+      fixed: false
+      unsigned: true
+      notnull: true
+
+S3Document:
+  connection: doctrine
+  inheritance:
+    extends: S3Object
+    type: column_aggregation
+    keyField: type
+    keyValue: 1
+    
+S3Image:
+  connection: doctrine
+  inheritance:
+    extends: S3Object
+    type: column_aggregation
+    keyField: type
+    keyValue: 2
+  columns:
+    width:
+      type: integer(4)
+      fixed: false
+      unsigned: true
+    height:
+      type: integer(4)
+      fixed: false
+      unsigned: true
+      
+  
+  
