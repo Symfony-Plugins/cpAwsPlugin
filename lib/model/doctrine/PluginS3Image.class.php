@@ -10,7 +10,9 @@
  * @author     ##NAME## <##EMAIL##>
  * @version    SVN: $Id: Builder.php 7490 2010-03-29 19:53:27Z jwage $
  */
-abstract class PluginS3Image extends BaseS3Image
-{
-
+abstract class PluginS3Image extends BaseS3Image {
+  
+  protected function updateFileInfo($path) {
+    list($this->width, $this->height, $type, $attr) = getimagesize($path);
+  }
 }

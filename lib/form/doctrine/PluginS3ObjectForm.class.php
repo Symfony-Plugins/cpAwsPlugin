@@ -15,7 +15,7 @@ abstract class PluginS3ObjectForm extends BaseS3ObjectForm {
       'filename' => new sfWidgetFormInputFileEditable(array(
         'file_src' => $this->isNew() ? 
           '' : 
-          '<a href="' . $this->getObject()->getUrl() . '">' . $this->getObject()->getFilename(). '</a>',
+          '<a href="' . $this->getObject()->getUrl() . '">' . $this->getObject()->getOriginalFilename(). '</a>',
         'edit_mode' => true,
         'label' => 'File' )),
       'title'             => new sfWidgetFormInputText(),

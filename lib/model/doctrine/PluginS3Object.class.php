@@ -39,15 +39,32 @@ abstract class PluginS3Object extends BaseS3Object {
     return sfConfig::get('app_aws_preauth');
   }
   
+  protected function updateFileInfo($path) { }
+  
+  /**
+   * @return boolean
+   */
+  protected function isUsedFile() { 
+    $count = $this->getTable()->
+               findByDql('filename = ?', $this->getFilename())->
+               count();
+    return (count > 1 ? true : false);
+  }
+  
   public function uploadFile($filename, $path) {
     $s3 = new AmazonS3($this->getAccessKeyId(), $this->getSecretAccessKey());
-    $s3->disable_ssl();
+    $sanitizer = new Sanitizer('object', '');
+    $filename = $sanitizer->sanitize($original_filename);
     $response = $s3->create_object($this->getBucket(), 
                                    $this->getS3Path() . $filename, 
-                                   array('fileUpload' => $path, 'acl' => AmazonS3::ACL_PRIVATE));
+                                   array('fileUpload' => $path, 
+                                         'acl' => AmazonS3::ACL_PRIVATE,
+                                         'headers' => array('Content-Disposition' => 'attachment; filename=' . $original_filename)));
     if ($response->isOK()) {
+      $this->updateFileInfo($path);
+      $this->setOriginalFilename($original_filename);
       // old file can be deleted
-      if ($this->exists() && $this->getFilename() && 
+      if ($this->exists() && $this->getFilename() && !$this->isUsedFile() &&
           $s3->if_object_exists($this->getBucket(),  $this->getS3Path() . $this->getFilename())) {
         $s3->delete_object($this->getBucket(),  $this->getS3Path() . $this->getFilename());
         $this->setFilename('');
