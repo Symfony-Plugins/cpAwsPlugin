@@ -11,6 +11,7 @@
 abstract class PluginS3ImageForm extends BaseS3ImageForm {
   
   public function configure() {
+    parent::configure();
     $this->validatorSchema['filename']->setOption('mime_types', 'image_video'); 
     $this->validatorSchema['filename']->setOption('mime_categories', 
                                                            array('image_video' => array('image/jpeg', 
