@@ -21,6 +21,6 @@ abstract class PluginS3ImageForm extends BaseS3ImageForm {
                                                                                         'image/gif',
                                                                                         'video/mpeg',
                                                                                         'video/quicktime',
-                                                                                        'video/x-msvideo')); 
+                                                                                        'video/x-msvideo'))); 
   }
 }
