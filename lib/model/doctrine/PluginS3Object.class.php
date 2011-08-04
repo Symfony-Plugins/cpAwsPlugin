@@ -53,6 +53,7 @@ abstract class PluginS3Object extends BaseS3Object {
   
   public function uploadFile($filename, $path) {
     $s3 = new AmazonS3($this->getAccessKeyId(), $this->getSecretAccessKey());
+    $s3->disable_ssl();
     $sanitizer = new Sanitizer('object', '');
     $filename = $sanitizer->sanitize($original_filename);
     $response = $s3->create_object($this->getBucket(), 
@@ -62,14 +63,13 @@ abstract class PluginS3Object extends BaseS3Object {
                                          'headers' => array('Content-Disposition' => 'attachment; filename=' . $original_filename)));
     if ($response->isOK()) {
       $this->updateFileInfo($path);
-      $this->setOriginalFilename($original_filename);
       // old file can be deleted
       if ($this->exists() && $this->getFilename() && !$this->isUsedFile() &&
           $s3->if_object_exists($this->getBucket(),  $this->getS3Path() . $this->getFilename())) {
         $s3->delete_object($this->getBucket(),  $this->getS3Path() . $this->getFilename());
-        $this->setFilename('');
       }
-      return $filename;
+      $this->setFilename($filename);
+      return $original_filename;
     }
     throw new S3_Exception('Check your AWS settings, file was not uploaded successfully.');
   }
