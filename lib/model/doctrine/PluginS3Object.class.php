@@ -39,7 +39,9 @@ abstract class PluginS3Object extends BaseS3Object {
     return sfConfig::get('app_aws_preauth');
   }
   
-  protected function updateFileInfo($path) { }
+  protected function updateFileInfo($path) { 
+    $this->size = filesize($path);
+  }
   
   /**
    * @return boolean
@@ -51,9 +53,24 @@ abstract class PluginS3Object extends BaseS3Object {
     return (count > 1 ? true : false);
   }
   
-  public function uploadFile($filename, $path) {
+  protected function deleteFile(AmazonS3 $s3) {
+    if ($this->exists() && $this->getFilename() && !$this->isUsedFile() &&
+        $s3->if_object_exists($this->getBucket(),  $this->getS3Path() . $this->getFilename())) {
+      $s3->delete_object($this->getBucket(),  $this->getS3Path() . $this->getFilename());
+    }
+  }
+  
+  /**
+   * @see lib/vendor/symfony/lib/plugins/sfDoctrinePlugin/lib/vendor/doctrine/Doctrine/Doctrine_Record::delete()
+   */
+  public function delete(Doctrine_Connection $conn = null) {
     $s3 = new AmazonS3($this->getAccessKeyId(), $this->getSecretAccessKey());
-    $s3->disable_ssl();
+    $this->deleteFile($s3);
+    return parent::delete($conn);
+  }
+
+  public function uploadFile($original_filename, $path) {
+    $s3 = new AmazonS3($this->getAccessKeyId(), $this->getSecretAccessKey());
     $sanitizer = new Sanitizer('object', '');
     $filename = $sanitizer->sanitize($original_filename);
     $response = $s3->create_object($this->getBucket(), 
@@ -63,15 +80,10 @@ abstract class PluginS3Object extends BaseS3Object {
                                          'headers' => array('Content-Disposition' => 'attachment; filename=' . $original_filename)));
     if ($response->isOK()) {
       $this->updateFileInfo($path);
-      // old file can be deleted
-      if ($this->exists() && $this->getFilename() && !$this->isUsedFile() &&
-          $s3->if_object_exists($this->getBucket(),  $this->getS3Path() . $this->getFilename())) {
-        $s3->delete_object($this->getBucket(),  $this->getS3Path() . $this->getFilename());
-      }
+      $this->deleteFile($s3);
       $this->setFilename($filename);
       return $original_filename;
     }
     throw new S3_Exception('Check your AWS settings, file was not uploaded successfully.');
   }
-
 }

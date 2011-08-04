@@ -13,6 +13,7 @@
 abstract class PluginS3Image extends BaseS3Image {
   
   protected function updateFileInfo($path) {
+    parent::updateFileInfo($path);
     list($this->width, $this->height, $type, $attr) = getimagesize($path);
   }
 }
