@@ -11,8 +11,9 @@
 abstract class PluginS3ObjectForm extends BaseS3ObjectForm {
   
   public function configure() {
+    parent::configure();
     $this->setWidgets(array(
-      'filename' => new sfWidgetFormInputFileEditable(array(
+      'original_filename' => new sfWidgetFormInputFileEditable(array(
         'file_src' => $this->isNew() ? 
           '' : 
           '<a href="' . $this->getObject()->getUrl() . '">' . $this->getObject()->getOriginalFilename(). '</a>',
@@ -25,18 +26,20 @@ abstract class PluginS3ObjectForm extends BaseS3ObjectForm {
     $this->setValidators(array(
       'title'             => new sfValidatorString(array('max_length' => 100, 'required' => false)),
       'description'       => new sfValidatorString(array('required' => false)),
-      'filename'          => new sfValidatorFile(array('path' => '', 'required' => $this->isNew())),
-      'filename_delete'   => new sfValidatorPass()
+      'original_filename'          => new sfValidatorFile(array('path' => '', 
+                                                                'required' => $this->isNew(),
+                                                                'validated_file_class' => 'ValidatedS3File')),
+      'original_filename_delete'   => new sfValidatorPass()
     ));
-
+    
     $this->disableCSRFProtection();
     $this->setOption('inlineLabels', true);
   }
 
-  protected function updateFilenameColumn($value) {
+  protected function updateOriginalFilenameColumn($value) {
     if ($value instanceof sfValidatedFile) {
       return $this->getObject()->uploadFile($value->getOriginalName(), $value->getTempName());
     }
     return false;
-  }
+  } 
 }  
