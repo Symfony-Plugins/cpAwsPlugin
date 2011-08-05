@@ -32,6 +32,11 @@ abstract class PluginS3ObjectForm extends BaseS3ObjectForm {
       'original_filename_delete'   => new sfValidatorPass()
     ));
     
+    $this->mergePostValidator(new sfValidatorDoctrineUnique(array(
+      'model' => $this->getModelName(), 
+      'column' => array('original_filename', 'asset_id')), array(
+      'invalid' => 'The file with the same name already exist.')));
+    
     $this->disableCSRFProtection();
     $this->setOption('inlineLabels', true);
   }
