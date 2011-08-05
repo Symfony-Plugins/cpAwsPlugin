@@ -44,28 +44,11 @@ abstract class PluginS3Object extends BaseS3Object {
   }
   
   /**
-   * @return boolean
-   */
-  protected function isUsedFile() { 
-    $count = $this->getTable()->
-               findByDql('filename = ?', $this->getFilename())->
-               count();
-    return (count > 1 ? true : false);
-  }
-  
-  protected function deleteFile(AmazonS3 $s3) {
-    if ($this->exists() && $this->getFilename() && !$this->isUsedFile() &&
-        $s3->if_object_exists($this->getBucket(),  $this->getS3Path() . $this->getFilename())) {
-      $s3->delete_object($this->getBucket(),  $this->getS3Path() . $this->getFilename());
-    }
-  }
-  
-  /**
    * @see lib/vendor/symfony/lib/plugins/sfDoctrinePlugin/lib/vendor/doctrine/Doctrine/Doctrine_Record::delete()
    */
   public function delete(Doctrine_Connection $conn = null) {
     $s3 = new AmazonS3($this->getAccessKeyId(), $this->getSecretAccessKey());
-    $this->deleteFile($s3);
+    $s3->delete_object($this->getBucket(),  $this->getS3Path() . $this->getFilename());
     return parent::delete($conn);
   }
 
@@ -80,10 +63,11 @@ abstract class PluginS3Object extends BaseS3Object {
                                          'headers' => array('Content-Disposition' => 'attachment; filename=' . $original_filename)));
     if ($response->isOK()) {
       $this->updateFileInfo($path);
-      $this->deleteFile($s3);
+      $s3->delete_object($this->getBucket(),  $this->getS3Path() . $this->getFilename()); // delete old file
       $this->setFilename($filename);
       return $original_filename;
     }
     throw new S3_Exception('Check your AWS settings, file was not uploaded successfully.');
   }
+  
 }
