@@ -53,6 +53,8 @@ abstract class PluginS3Object extends BaseS3Object {
     return parent::delete($conn);
   }
 
+  protected function doDelete(AmazonS3 $s3) {}
+  
   public function uploadFile($original_filename, $path, $filename) {
     $s3 = new AmazonS3($this->getAccessKeyId(), $this->getSecretAccessKey());
     $response = $s3->create_object($this->getBucket(),
