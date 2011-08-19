@@ -16,4 +16,77 @@ abstract class PluginS3Image extends BaseS3Image {
     parent::updateFileInfo($path);
     list($this->width, $this->height, $type, $attr) = getimagesize($path);
   }
+  
+  public function getS3ThumbnailPath() {
+    return '/';
+  }
+  
+  protected function doUploadFile(AmazonS3 $s3, $path, $filename) {
+    // create thumbnail
+    if ($thumbnail = $this->createThumbnail($path)) {
+      $response = $s3->create_object($this->getBucket(),
+      $this->getS3ThumbnailPath() . $filename,
+      array('fileUpload' => $thumbnail,
+                                             'acl' => AmazonS3::ACL_PRIVATE));
+      unlink($thumbnail);
+      if (!$response->isOK()) {
+        throw new S3_Exception('Check your AWS settings, file was not uploaded successfully.');
+      }
+    }
+  }
+  
+  protected function doDelete(AmazonS3 $s3) {
+    if ($s3->if_object_exists($this->getBucket(),  $this->getS3ThumbnailPath() . $this->getFilename())) {
+      $s3->delete_object($this->getBucket(),  $this->getS3ThumbnailPath() . $this->getFilename()); // delete old file
+    }
+  }
+  
+  
+  /**
+   * @return string thumbnail path
+   */
+  protected function createThumbnail($path) {
+    //check if images not video
+    $imageinfo = getimagesize($path);
+    if (!$imageinfo) { return null; }
+    list($width, $height, $type, $attr) = $imageinfo;
+    $ext = image_type_to_mime_type($type);
+    if (!in_array($ext, array("image/jpeg", "image/png", "image/gif"))) { return null; }
+    
+    // create resource and determine size
+    switch($ext) {
+      case "image/jpeg":
+        $orig_image = imagecreatefromjpeg($path);
+        break;
+      case "image/png":
+        $orig_image = imagecreatefrompng($path);
+        break;
+      case "image/gif":
+        $orig_image = imagecreatefromgif($path);
+        break;
+    }
+    $ox = imagesx($orig_image);  
+    $oy = imagesy($orig_image);
+    $nx = sfConfig::get('app_image_width');
+    $ny = floor($oy * ($nx / $ox));
+    
+    $new_image = imagecreatetruecolor($nx, $ny);  
+    if (!imagecopyresized($new_image, $orig_image, 0, 0, 0, 0, $nx, $ny, $ox, $oy)) { return null; }  
+    imagedestroy($orig_image);
+    
+    // put resource in temp file
+    $thumbnail_path = tempnam(sys_get_temp_dir(), 'php');
+    switch($ext) {
+      case "image/jpeg":
+        imagejpeg($new_image, $thumbnail_path);
+        break;
+      case "image/png":
+        imagepng($new_image, $thumbnail_path);
+        break;
+      case "image/gif":
+        imagegif($new_image, $thumbnail_path);
+        break;
+    }  
+    return $thumbnail_path;
+  }
 }
