@@ -87,7 +87,7 @@ abstract class PluginS3Image extends BaseS3Image {
     }
     $ox = imagesx($orig_image);
     $oy = imagesy($orig_image);
-    $width = ($width ? $width : sfConfig::get('app_thumbnail_width'));
+
     if (!$height) {
       if ($ox > $oy) {
         $nx = $width;
