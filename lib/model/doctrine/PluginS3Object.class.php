@@ -74,4 +74,5 @@ abstract class PluginS3Object extends BaseS3Object {
     throw new S3_Exception('Check your AWS settings, file was not uploaded successfully.');
   }
   
+  protected function doUploadFile(AmazonS3 $s3, $path, $filename) {}
 }
