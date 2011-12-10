@@ -16,7 +16,7 @@ S3Object:
       notnull: true
     title:
       type: string(100)
-      fixed: truee
+      fixed: true
       notnull: false   
     description:
       type: string
